@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace xzToolsKit
 {
-    public class Class1
+    public class Main
     {
+        public static void showUI()
+        {
+            FrmMain frmMain = new FrmMain();
+            frmMain.init();
+        }
     }
 }
