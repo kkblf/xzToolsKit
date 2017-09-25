@@ -74,6 +74,7 @@
     <Compile Include="Proxy\AccountProxy.cs" />
     <Compile Include="Proxy\DocumentProxy.cs" />
     <Compile Include="Proxy\WorkspaceProxy.cs" />
+    <Compile Include="Service\WorkspaceService.cs" />
     <Compile Include="Service\LoginService.cs" />
   </ItemGroup>
   <ItemGroup>

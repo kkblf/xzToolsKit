@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace xzToolsKit
 {
@@ -10,8 +11,14 @@ namespace xzToolsKit
     {
         public static void showUI()
         {
-            FrmMain frmMain = new FrmMain();
-            frmMain.init();
+            try
+            {
+                FrmMain frmMain = new FrmMain();
+                frmMain.init();
+            } catch(Exception ept)
+            {
+                MessageBox.Show("启动出错："+ept.Message);
+            }
         }
     }
 }

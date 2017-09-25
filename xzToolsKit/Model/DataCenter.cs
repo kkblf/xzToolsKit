@@ -8,6 +8,7 @@ namespace xzToolsKit.model
     class DataCenter
     {
         public static DateTime lastLoginTime { get; set; }
+        public static String wsId = "ca0df842837e4fa4ac674793eac41c0f";
         public static LoginResponse loginResponse { get; set; }
 
         public static List<WorkspaceMeta> workspaceList { get; set; }
@@ -15,5 +16,13 @@ namespace xzToolsKit.model
         public static String currentWorkspaceId { get; set; }
 
         public static String  parentId { get; set; }
+
+        public static void clear()
+        {
+            loginResponse = null;
+            workspaceList = null;
+            currentWorkspaceId = null;
+            parentId = null;
+        }
     }
 }
