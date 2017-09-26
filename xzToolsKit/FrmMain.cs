@@ -30,27 +30,38 @@ namespace xzToolsKit
 
         public void init()
         {
-            loginService = new LoginService();
-            if (loginService.needLogin())
+            try
             {
-                FrmLogin frmLogin = new FrmLogin();
-                DialogResult dialogResult = frmLogin.ShowDialog();
-                if (dialogResult == DialogResult.OK)
+                loginService = new LoginService();
+                if (loginService.needLogin())
+                {
+                    FrmLogin frmLogin = new FrmLogin();
+                    DialogResult dialogResult = frmLogin.ShowDialog();
+                    if (dialogResult == DialogResult.OK)
+                    {
+                        this.Show();
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
                 {
                     this.Show();
                 }
-            } else
+
+
+                workspaceProxy = new WorkspaceProxy();
+                documentProxy = new DocumentProxy();
+                workspaceService = new WorkspaceService(workspaceProxy);
+                DataCenter.currentWorkspaceId = DataCenter.wsId;
+
+                load();
+            } catch(Exception ept)
             {
-                this.Show();
+                MessageBox.Show("初始化失败[" + ept.Message + "]");
             }
-
-
-            workspaceProxy = new WorkspaceProxy();
-            documentProxy = new DocumentProxy();
-            workspaceService = new WorkspaceService(workspaceProxy);
-            DataCenter.currentWorkspaceId = DataCenter.wsId;
-
-            load();
         }
 
         public void load()
@@ -121,11 +132,15 @@ namespace xzToolsKit
                 ListViewItem item = new ListViewItem(_.name);
                 if (_.folder)
                 {
-                    item.ImageKey = "folder";
+                    item.ImageKey = "folder"+".png";
+                } 
+                else if (imageListSmall.Images.Keys.Contains(_.suffix.ToLower()+".png"))
+                {
+                    item.ImageKey = _.suffix.ToLower()+".png";
                 }
                 else
                 {
-                    item.ImageKey = "file";
+                    item.ImageKey = "file"+".png";
                 }
                 item.Tag = _;
                 this.listView1.Items.Add(item);
@@ -153,36 +168,43 @@ namespace xzToolsKit
 
         private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            if (this.listView1.SelectedItems != null && this.listView1.SelectedItems.Count > 0)
+            try
             {
-                Node node = this.listView1.SelectedItems[0].Tag as Node;
-                String fileId = "";
-                if (node.type == 1 || node.type == 0)
+                if (this.listView1.SelectedItems != null && this.listView1.SelectedItems.Count > 0)
                 {
-                    //节点表示空间
-                    WorkspaceMeta workspaceMeta = node as WorkspaceMeta;
-                    DataCenter.currentWorkspaceId = workspaceMeta.id;
-                    fileId = workspaceMeta.id;
-                    loadChild(fileId);
-                }
-                else if (node.type == 2)
-                {
-                    //节点表示文件或文件夹
-                    FileItem fileItem = node as FileItem;
-                    fileId = fileItem.fileId;
-
-                    if (fileItem.folder)
+                    Node node = this.listView1.SelectedItems[0].Tag as Node;
+                    String fileId = "";
+                    if (node.type == 1 || node.type == 0)
                     {
-                        //文件夹加载子文件
+                        //节点表示空间
+                        WorkspaceMeta workspaceMeta = node as WorkspaceMeta;
+                        DataCenter.currentWorkspaceId = workspaceMeta.id;
+                        fileId = workspaceMeta.id;
                         loadChild(fileId);
                     }
-                    else
+                    else if (node.type == 2)
                     {
-                        //文件执行下载
-                        download(fileId);
-                    }
-                }
+                        //节点表示文件或文件夹
+                        FileItem fileItem = node as FileItem;
+                        fileId = fileItem.fileId;
 
+                        if (fileItem.folder)
+                        {
+                            //文件夹加载子文件
+                            loadChild(fileId);
+                        }
+                        else
+                        {
+                            //文件执行下载
+                            download(fileId);
+                        }
+                    }
+
+                }
+            } catch(Exception ept)
+            {
+                if(DataCenter.isExiting!=true)
+                  MessageBox.Show("执行出错！["+ept.Message+"]");
             }
         }
 
@@ -190,42 +212,59 @@ namespace xzToolsKit
 
         private void btnHome_Click(object sender, EventArgs e)
         {
-            load();
+            try
+            {
+                load();
+            } catch(Exception ept)
+            {
+                MessageBox.Show("返回首页出错![" + ept.Message + "]");
+            }
         }
 
         private void btnUp_Click(object sender, EventArgs e)
         {
-            FileItem fileItem = documentProxy.file(DataCenter.currentWorkspaceId, DataCenter.parentId);
-            if (fileItem == null || fileItem.parentId == null || fileItem.parentId == DataCenter.currentWorkspaceId)
+            try
             {
-                load();
-            }
-            else
+                FileItem fileItem = documentProxy.file(DataCenter.currentWorkspaceId, DataCenter.parentId);
+                if (fileItem == null || fileItem.parentId == null || fileItem.parentId == DataCenter.currentWorkspaceId)
+                {
+                    load();
+                }
+                else
+                {
+                    loadChild(fileItem.parentId);
+                }
+            } catch(Exception ept)
             {
-                loadChild(fileItem.parentId);
+                MessageBox.Show("返回上一级出错![" + ept.Message + "]");
             }
         }
 
         private void btnDownload_Click(object sender, EventArgs e)
         {
-            if (this.listView1.SelectedItems != null && this.listView1.SelectedItems.Count > 0)
+            try
             {
-                Node node = this.listView1.SelectedItems[0].Tag as Node;
-                String fileId = "";
-                if (node.type == 2)
+                if (this.listView1.SelectedItems != null && this.listView1.SelectedItems.Count > 0)
                 {
-                    FileItem fileItem = node as FileItem;
-                    if (fileItem.folder)
+                    Node node = this.listView1.SelectedItems[0].Tag as Node;
+                    String fileId = "";
+                    if (node.type == 2)
                     {
-                        MessageBox.Show("请选择文件");
-                    }
-                    else
-                    {
-                        fileId = fileItem.fileId;
-                        download(fileId);
-
+                        FileItem fileItem = node as FileItem;
+                        if (fileItem.folder)
+                        {
+                            MessageBox.Show("请选择文件");
+                        }
+                        else
+                        {
+                            fileId = fileItem.fileId;
+                            download(fileId);
+                        }
                     }
                 }
+            } catch(Exception ept)
+            {
+                MessageBox.Show("下载文件失败！["+ept.Message+"]");
             }
 
         }
@@ -256,24 +295,62 @@ namespace xzToolsKit
 
         private void btnUpload_Click(object sender, EventArgs e)
         {
-            if (DataCenter.parentId == null) return;
-            OpenFileDialog ofd = new OpenFileDialog();
-            ofd.RestoreDirectory = true;
-            if (ofd.ShowDialog() == DialogResult.OK)
+            try
             {
-                System.IO.Stream file = ofd.OpenFile();
-                toolStripProgressBar1.Maximum = Convert.ToInt32(file.Length);
-                toolStripProgressBar1.Value = 0;
-                documentProxy.upload(DataCenter.currentWorkspaceId, DataCenter.parentId, System.IO.Path.GetFileName(ofd.FileName), file.Length, file, this);
-                MessageBox.Show("上传完成");
-                loadChild(DataCenter.parentId);
+                if (DataCenter.parentId == null) return;
+                OpenFileDialog ofd = new OpenFileDialog();
+                ofd.RestoreDirectory = true;
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    System.IO.Stream file = ofd.OpenFile();
+                    toolStripProgressBar1.Maximum = Convert.ToInt32(file.Length);
+                    toolStripProgressBar1.Value = 0;
+                    documentProxy.upload(DataCenter.currentWorkspaceId, DataCenter.parentId, System.IO.Path.GetFileName(ofd.FileName), file.Length, file, this);
+                    MessageBox.Show("上传完成");
+                    loadChild(DataCenter.parentId);
+                }
+            } catch(Exception ept)
+            {
+                MessageBox.Show("上传出错！[" + ept.Message + "]");
             }
         }
 
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
-            DataCenter.clear();
-            this.Close();
+            try
+            {
+                DataCenter.clear();
+                this.Close();
+            } catch(Exception ept)
+            {
+                MessageBox.Show("注销失败！[" + ept.Message + "]");
+            }
+        }
+
+        public ToolStripProgressBar getToolStripProgressBar1()
+        {
+            return this.toolStripProgressBar1;
+        }
+
+        public void showMessage(String message)
+        {
+            try
+            {
+                toolStripStatusLabel2.Text = message;
+            } catch(Exception ept)
+            {
+
+            }
+        }
+
+        private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            
+        }
+
+        private void FrmMain_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            DataCenter.isExiting = true;
         }
     }
 }
